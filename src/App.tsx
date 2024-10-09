@@ -91,11 +91,14 @@ function renderBoard(game: Game, currentGuess: number, currentRow: number) {
     return r.reverse();
 }
 
-function renderOptions(game: Game) {
+function renderOptions(game: Game, currentOption: number) {
     const options = [];
+    const valid = [];
+    let index = 0;
     for (let i = 0; i < IDS.length; i++) {
         const style: React.CSSProperties = {};
-        if (game.greens.indexOf(i) != -1 || game.grays.indexOf(i) != -1 || game.yellows.has(i)) {
+        const isInvalid = game.greens.indexOf(i) != -1 || game.grays.indexOf(i) != -1 || game.yellows.has(i);
+        if (isInvalid) {
             style.filter = "brightness(30%)";
         }
         const card = renderCard(
@@ -106,7 +109,13 @@ function renderOptions(game: Game) {
             style,
         );
         options.push(card);
+        if (!isInvalid) {
+            valid.push(card);
+            index += 1;
+        }
     }
+
+    valid[mod(currentOption, valid.length)].props.style.backgroundColor = "black";
 
     return (
         <div
@@ -140,6 +149,10 @@ function randomAnswer() {
     return answer;
 }
 
+function mod(n: number, m: number) {
+    return ((n % m) + m) % m;
+}
+
 function App() {
     const [answer, setAnswer] = useState(randomAnswer());
     const [game, setGame] = useState({
@@ -157,11 +170,14 @@ function App() {
     });
     const [currentGuess, setCurrentGuess] = useState(0);
     const [currentRow, setCurrentRow] = useState(0);
+    const [currentOption, setCurrentOption] = useState(0);
     const [lastPressedKey, setLastPressedKey] = useState(null);
     const [currentOptions, setCurrentOptions] = useState({});
 
     const handleKeyPress = (event: KeyboardEvent) => {
+        event.preventDefault();
         let row = currentRow;
+        let option = currentOption;
         switch (event.key) {
             case "ArrowDown":
                 row = currentRow + 1;
@@ -169,17 +185,21 @@ function App() {
             case "ArrowUp":
                 row = currentRow - 1;
                 break;
+            case "ArrowLeft":
+                option = option - 1;
+                break;
+            case "ArrowRight":
+                option = option + 1;
+                break;
         }
-        if (row < 0) {
-            row += 4;
-        }
-        setCurrentRow(row % 4);
+        setCurrentRow(mod(row, 4));
+        setCurrentOption(option);
     };
     useEffect(() => {
         window.addEventListener("keydown", handleKeyPress);
 
         return () => window.removeEventListener("keydown", handleKeyPress);
-    }, [currentRow]);
+    }, [currentRow, currentOption]);
 
     return (
         <div
@@ -208,7 +228,7 @@ function App() {
                 {renderBoard(game, currentGuess, currentRow)}
             </div>
 
-            {renderOptions(game)}
+            {renderOptions(game, currentOption)}
         </div>
     );
 }
