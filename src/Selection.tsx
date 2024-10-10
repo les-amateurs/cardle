@@ -9,7 +9,6 @@ function Selection({
     currentSelectionIndex: number;
 }) {
     const selections = [];
-    currentSelectionIndex = mod(currentSelectionIndex, validSelections.length);
     for (let i = 0; i < IDS.length; i++) {
         let style: React.CSSProperties = {};
         if (validSelections.indexOf(i) == -1) {

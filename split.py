@@ -17,12 +17,12 @@ for i in range(4):
         sheet = Image.open("balatro.png")
         new = sheet.crop(box)
 
-        pixdata = new.load()
-        width, height = new.size
-        for y in range(height):
-            for x in range(width):
-                if pixdata[x, y][3] == 0:
-                    pixdata[x, y] = borderdata[x, y]
+        # pixdata = new.load()
+        # width, height = new.size
+        # for y in range(height):
+        #     for x in range(width):
+        #         if pixdata[x, y][3] == 0:
+        #             pixdata[x, y] = borderdata[x, y]
         new.save(f"src/assets/cards/{IDS[j]}-of-{SUITS[i]}.png")
 
 sheet = Image.open("backs.png")

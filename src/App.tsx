@@ -158,7 +158,7 @@ function App() {
                 alignItems: "center",
             }}
         >
-            <Board game={game.get} position={position.get}></Board>
+            <Board guess={guess.get} game={game.get} position={position.get}></Board>
             <Selection
                 validSelections={validSelections.get}
                 currentSelectionIndex={currentSelection.get}
