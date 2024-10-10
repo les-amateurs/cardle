@@ -13,7 +13,7 @@ export interface Card {
 export interface Game {
     board: Card[][];
     answer: number[];
-    greens: number[];
+    greens: Map<number, number>;
     yellows: Map<number, number[]>;
     grays: number[];
 }

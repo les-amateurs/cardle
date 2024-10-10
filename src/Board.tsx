@@ -6,7 +6,7 @@ function Board({
     game,
     position,
 }: {
-    guess: number[];
+    guess: (number|undefined)[];
     game: Game;
     position: Vec2;
 }) {
@@ -16,25 +16,16 @@ function Board({
 
     // fill in guess
     for (let i = 0; i < guess.length; i++) {
-        if (matrix[i][0].state == State.Empty) {
-            guess
-                .map((n) => {
-                    return n == undefined
-                        ? undefined
-                        : {
-                              state: State.Visible,
-                              n: n,
-                              color: null,
-                          };
-                })
-                .forEach((card, j) => {
-                    if (card == undefined) {
-                        return;
-                    }
-                    matrix[xPos][j] = card;
-                });
-            break;
-        }
+        const card = (guess[i] === undefined) ? {
+            state: State.Empty,
+            n: 0,
+            color: null,
+        } : {
+            state: State.Visible,
+            n: guess[i]||0,
+            color: null,
+        };
+        matrix[xPos][i] = card;
     }
 
     for (let i = 0; i < matrix[0].length; i++) {

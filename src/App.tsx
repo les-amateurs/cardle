@@ -46,7 +46,7 @@ function App() {
                     })
                 ),
             answer: randomAnswer(),
-            greens: [],
+            greens: new Map<number, number>(),
             yellows: new Map(
                 Array(13)
                     .fill(0)
@@ -55,23 +55,28 @@ function App() {
             grays: [],
         })
     );
-    const guess: Var<number[]> = wrap(useState([]));
+    const guess: Var<(number | undefined)[]> = wrap(useState([]));
     const position: Var<Vec2> = wrap(useState({ x: 0, y: 0 }));
     const currentSelection: Var<number> = wrap(useState(0));
     const validSelections: Var<number[]> = wrap(useState([]));
+    const validRows: Var<number[]> = wrap(useState([0, 1, 2, 3]));
 
     function updatePosition(key: string) {
         let pos = { ...position.get };
         switch (key) {
             case "ArrowDown":
-                pos.y += 1;
+                do {
+                    pos.y = mod(pos.y + 1, 4);
+                } while (!validRows.get[pos.y]);
                 break;
             case "ArrowUp":
-                pos.y -= 1;
+                console.log(validRows.get);
+                do {
+                    pos.y = mod(pos.y - 1, 4);
+                } while (!validRows.get[pos.y]);
                 break;
         }
-        pos.y = mod(pos.y, 4);
-        position.set(pos);
+        position.set({...position.get, y: pos.y });
     }
 
     function updateSelection(key: string | null) {
@@ -102,7 +107,7 @@ function App() {
         const valid = [];
         for (let i = 0; i < IDS.length; i++) {
             const isInvalid =
-                game.get.greens.indexOf(i) != -1 ||
+                game.get.greens.has(i) ||
                 game.get.grays.indexOf(i) != -1 ||
                 (game.get.yellows.has(i) &&
                     game.get.yellows.get(i)?.indexOf(position.get.y) != -1) ||
@@ -114,6 +119,12 @@ function App() {
         validSelections.set(valid);
     }
 
+    function updateValidRows() {
+        const values = Array.from(game.get.greens.values());
+        const rows = [0, 1, 2, 3].map(n => values.indexOf(n) == -1);
+        validRows.set(rows);
+    }
+
     function select() {
         const lastGuess = guess.get;
         const yPos = position.get.y;
@@ -121,6 +132,16 @@ function App() {
         const newGuess = [...lastGuess];
         newGuess[yPos] = validSelections.get[currentSelection.get];
 
+        const closest = [];
+        for (let i = 0; i < 4; i++) {
+            if (newGuess[i] === undefined) {
+                closest.push(i);
+            }
+        }
+        closest.sort((a, b) => Math.abs(a - yPos) - Math.abs(b - yPos));
+        if (closest.length != 0) {
+            position.set({ ...position.get, y: closest[0] });
+        }
         guess.set(newGuess);
     }
 
@@ -132,37 +153,54 @@ function App() {
     }
 
     function submit() {
-        const newBoard = structuredClone(game.get.board);
-        const newGreens = structuredClone(game.get.greens);
-        const newGrays = structuredClone(game.get.grays);
-        const newYellows = new Map(game.get.yellows);
         const oldGuess = structuredClone(guess.get);
+        if (
+            oldGuess.indexOf(undefined) == -1 ||
+            validSelections.get.length == 0
+        ) {
+            const newBoard = structuredClone(game.get.board);
+            const newGreens = structuredClone(game.get.greens);
+            const newGrays = structuredClone(game.get.grays);
+            const newYellows = new Map(game.get.yellows);
+            const newGuess = Array(4).fill(undefined);
 
-        const xPos = position.get.x;
-        for (let i = 0; i < 4; i++) {
-            const card = {...newBoard[xPos][i]};
-            const g = oldGuess[i];
-            card.n = g;
-            card.state = State.Visible;
-            if (g == game.get.answer[i]) {
-                newGreens.push(g);
-                card.color = "green";
-            } else if (game.get.answer.indexOf(g) != -1) {
-                if (!newYellows.has(g)) {
-                    newYellows.set(g, []);
+            const xPos = position.get.x;
+            for (let i = 0; i < 4; i++) {
+                const card = { ...newBoard[xPos][i] };
+                const g = oldGuess[i];
+                if (g === undefined) {
+                    card.state = State.Empty;
+                } else {
+                    card.n = g;
+                    card.state = State.Visible;
+                    if (g == game.get.answer[i]) {
+                        newGreens.set(g, i);
+                        newGuess[i] = g;
+                        card.color = "green";
+                    } else if (game.get.answer.indexOf(g) != -1) {
+                        if (!newYellows.has(g)) {
+                            newYellows.set(g, []);
+                        }
+                        newYellows.get(g)?.push(i);
+                        card.color = "yellow";
+                    } else {
+                        newGrays.push(g);
+                        card.color = "gray";
+                    }
                 }
-                newYellows.get(g)?.push(i);
-                card.color = "yellow";
-            } else {
-                newGrays.push(g);
-                card.color = "gray";
+                newBoard[xPos][i] = card;
             }
-            newBoard[xPos][i] = card;
-        }
 
-        game.set({ ...game.get, board: newBoard, greens: newGreens, yellows: newYellows, grays: newGrays });
-        position.set({ ...position.get, x: position.get.x + 1});
-        guess.set([]);
+            game.set({
+                ...game.get,
+                board: newBoard,
+                greens: newGreens,
+                yellows: newYellows,
+                grays: newGrays,
+            });
+            position.set({ ...position.get, x: position.get.x + 1 });
+            guess.set(newGuess);
+        }
     }
 
     const events = new Map(
@@ -211,6 +249,10 @@ function App() {
     useEffect(() => {
         updateSelections();
     }, [guess.get, currentSelection.get, position.get]);
+
+    useEffect(() => {
+        updateValidRows();
+    }, [game.get]);
 
     return (
         <div
