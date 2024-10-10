@@ -47,7 +47,8 @@ export const IDS = [
 export const SUITS = ["hearts", "clubs", "diamonds", "spades"];
 
 export function mod(n: number, m: number) {
-    return ((n % m) + m) % m;
+    const d = m == 0 ? 1 : m;
+    return ((n % d) + m) % d;
 }
 
 export function wrap<T>([val, setter]: [T, any]): Var<T> {

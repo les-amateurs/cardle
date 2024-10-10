@@ -1,53 +1,8 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { Game, Card, State, IDS, mod, Var, wrap, Vec2 } from "./common.tsx";
 import "./App.css";
 import Board from "./Board.tsx";
 import Selection from "./Selection.tsx";
-
-function updateSelections(
-    game: Game,
-    position: Vec2,
-    validSelections: Var<number[]>
-) {
-    const valid = [];
-    for (let i = 0; i < IDS.length; i++) {
-        const isInvalid =
-            game.greens.indexOf(i) != -1 ||
-            game.grays.indexOf(i) != -1 ||
-            (game.yellows.has(i) &&
-                game.yellows.get(i)?.indexOf(position.y) != -1);
-        if (!isInvalid) {
-            valid.push(i);
-        }
-    }
-    validSelections.set(valid);
-}
-
-function updateGame(currentGuess: number, setGame: any) {
-    setGame((game: Game) => {
-        const newGreens = [...game.greens];
-        const newYellows = new Map(game.yellows);
-        const newGrays = [...game.grays];
-        const guess = game.board[currentGuess];
-        for (let i = 0; i < 4; i++) {
-            const n = guess[i].n;
-            if (n == game.answer[i]) {
-                newGreens.push(n);
-            } else if (game.answer.indexOf(n) != -1) {
-                newYellows.get(n)?.push(i);
-            } else {
-                newGrays.push(n);
-            }
-        }
-        return {
-            ...game,
-            greens: newGreens,
-            yellows: newYellows,
-            grays: newGrays,
-        };
-    });
-}
 
 function randomAnswer() {
     const answer = [];
@@ -83,14 +38,14 @@ function App() {
         })
     );
     const guess: Var<number[]> = wrap(useState([]));
-    const position: Var<{ x: number; y: number }> = wrap(
+    const position: Var<Vec2> = wrap(
         useState({ x: 0, y: 0 })
     );
     const currentSelection: Var<number> = wrap(useState(0));
     const validSelections: Var<number[]> = wrap(useState([]));
 
     function updatePosition(key: string) {
-        let pos = {...position.get};
+        let pos = { ...position.get };
         switch (key) {
             case "ArrowDown":
                 pos.y += 1;
@@ -106,6 +61,7 @@ function App() {
 
     function updateSelection(key: string | null) {
         let sel = currentSelection.get;
+        console.log(sel, validSelections.get.length);
         if (key) {
             switch (key) {
                 case "ArrowLeft":
@@ -117,6 +73,21 @@ function App() {
             }
         }
         currentSelection.set(mod(sel, validSelections.get.length));
+    }
+
+    function updateSelections() {
+        const valid = [];
+        for (let i = 0; i < IDS.length; i++) {
+            const isInvalid =
+                game.get.greens.indexOf(i) != -1 ||
+                game.get.grays.indexOf(i) != -1 ||
+                (game.get.yellows.has(i) &&
+                    game.get.yellows.get(i)?.indexOf(position.get.y) != -1);
+            if (!isInvalid) {
+                valid.push(i);
+            }
+        }
+        validSelections.set(valid);
     }
 
     const events = new Map(
@@ -135,7 +106,9 @@ function App() {
         }
     };
 
-    useEffect(() => {updateSelection(null)}, [validSelections.get]);
+    useEffect(() => {
+        updateSelection(null);
+    }, [validSelections.get]);
 
     useEffect(() => {
         window.addEventListener("keydown", handleKeyPress);
@@ -143,8 +116,8 @@ function App() {
     }, [handleKeyPress]);
 
     useEffect(() => {
-        updateSelections(game.get, position.get, validSelections);
-    }, [currentSelection.get]);
+        updateSelections();
+    }, []);
 
     return (
         <div
@@ -158,7 +131,11 @@ function App() {
                 alignItems: "center",
             }}
         >
-            <Board guess={guess.get} game={game.get} position={position.get}></Board>
+            <Board
+                guess={guess.get}
+                game={game.get}
+                position={position.get}
+            ></Board>
             <Selection
                 validSelections={validSelections.get}
                 currentSelectionIndex={currentSelection.get}
