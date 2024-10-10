@@ -2,9 +2,11 @@ import PlayingCard from "./PlayingCard.tsx";
 import { Card, Game, numberToCard, State, Vec2 } from "./common.tsx";
 
 function Board({
+    guess,
     game,
     position,
 }: {
+    guess: number[],
     game: Game;
     position: Vec2;
 }) {
