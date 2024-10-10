@@ -4,7 +4,23 @@ import "./App.css";
 import Board from "./Board.tsx";
 import Selection from "./Selection.tsx";
 
-const SHORTCODES = new Map(Object.entries({ "2": 0, "3": 1, "4": 2, "5": 3, "6": 4, "7": 5, "8": 6, "9": 7, "10": 8, "j": 9, "q": 10, "k": 11, "a": 12 }));
+const SHORTCODES = new Map(
+    Object.entries({
+        "2": 0,
+        "3": 1,
+        "4": 2,
+        "5": 3,
+        "6": 4,
+        "7": 5,
+        "8": 6,
+        "9": 7,
+        "10": 8,
+        j: 9,
+        q: 10,
+        k: 11,
+        a: 12,
+    })
+);
 
 function randomAnswer() {
     const answer = [];
@@ -40,9 +56,7 @@ function App() {
         })
     );
     const guess: Var<number[]> = wrap(useState([]));
-    const position: Var<Vec2> = wrap(
-        useState({ x: 0, y: 0 })
-    );
+    const position: Var<Vec2> = wrap(useState({ x: 0, y: 0 }));
     const currentSelection: Var<number> = wrap(useState(0));
     const validSelections: Var<number[]> = wrap(useState([]));
 
@@ -91,7 +105,8 @@ function App() {
                 game.get.greens.indexOf(i) != -1 ||
                 game.get.grays.indexOf(i) != -1 ||
                 (game.get.yellows.has(i) &&
-                    game.get.yellows.get(i)?.indexOf(position.get.y) != -1);
+                    game.get.yellows.get(i)?.indexOf(position.get.y) != -1) ||
+                guess.get.indexOf(i) != -1;
             if (!isInvalid) {
                 valid.push(i);
             }
@@ -102,11 +117,52 @@ function App() {
     function select() {
         const lastGuess = guess.get;
         const yPos = position.get.y;
-        
+
         const newGuess = [...lastGuess];
-        newGuess[yPos] = currentSelection.get;
+        newGuess[yPos] = validSelections.get[currentSelection.get];
 
         guess.set(newGuess);
+    }
+
+    function deselect() {
+        const yPos = position.get.y;
+        const newGuess = [...guess.get];
+        newGuess[yPos] = undefined;
+        guess.set(newGuess);
+    }
+
+    function submit() {
+        const newBoard = structuredClone(game.get.board);
+        const newGreens = structuredClone(game.get.greens);
+        const newGrays = structuredClone(game.get.grays);
+        const newYellows = new Map(game.get.yellows);
+        const oldGuess = structuredClone(guess.get);
+
+        const xPos = position.get.x;
+        for (let i = 0; i < 4; i++) {
+            const card = {...newBoard[xPos][i]};
+            const g = oldGuess[i];
+            card.n = g;
+            card.state = State.Visible;
+            if (g == game.get.answer[i]) {
+                newGreens.push(g);
+                card.color = "green";
+            } else if (game.get.answer.indexOf(g) != -1) {
+                if (!newYellows.has(g)) {
+                    newYellows.set(g, []);
+                }
+                newYellows.get(g)?.push(i);
+                card.color = "yellow";
+            } else {
+                newGrays.push(g);
+                card.color = "gray";
+            }
+            newBoard[xPos][i] = card;
+        }
+
+        game.set({ ...game.get, board: newBoard, greens: newGreens, yellows: newYellows, grays: newGrays });
+        position.set({ ...position.get, x: position.get.x + 1});
+        guess.set([]);
     }
 
     const events = new Map(
@@ -115,27 +171,31 @@ function App() {
             ArrowUp: updatePosition,
             ArrowLeft: updateSelection,
             ArrowRight: updateSelection,
-            Enter: select,
-            2: updateSelection,
-            3: updateSelection,
-            4: updateSelection,
-            5: updateSelection,
-            6: updateSelection,
-            7: updateSelection,
-            8: updateSelection,
-            9: updateSelection,
-            10: updateSelection,
-            j: updateSelection,
-            q: updateSelection,
-            k: updateSelection,
-            a: updateSelection,
+            Space: select,
+            Backspace: deselect,
+            Enter: submit,
+            Digit2: updateSelection,
+            Digit3: updateSelection,
+            Digit4: updateSelection,
+            Digit5: updateSelection,
+            Digit6: updateSelection,
+            Digit7: updateSelection,
+            Digit8: updateSelection,
+            Digit9: updateSelection,
+            Digit1: updateSelection,
+            KeyJ: updateSelection,
+            KeyQ: updateSelection,
+            KeyK: updateSelection,
+            KeyA: updateSelection,
         })
     );
     const handleKeyPress = (event: KeyboardEvent) => {
-        const callback = events.get(event.key);
+        console.log(game.get);
+        const callback = events.get(event.code);
+        console.log(event);
         if (callback) {
             event.preventDefault(); // i want to reload the page :skull: (L)
-            callback(event.key);
+            callback(event.code);
         }
     };
 
@@ -150,7 +210,7 @@ function App() {
 
     useEffect(() => {
         updateSelections();
-    }, []);
+    }, [guess.get, currentSelection.get, position.get]);
 
     return (
         <div

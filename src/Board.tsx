@@ -11,7 +11,8 @@ function Board({
     position: Vec2;
 }) {
     let cards = [];
-    const matrix = [...game.board].map((col) => [...col]);
+    const matrix = structuredClone(game.board);
+    const xPos = position.x;
 
     // fill in guess
     for (let i = 0; i < guess.length; i++) {
@@ -30,7 +31,7 @@ function Board({
                     if (card == undefined) {
                         return;
                     }
-                    matrix[i][j] = card;
+                    matrix[xPos][j] = card;
                 });
             break;
         }
