@@ -31,7 +31,8 @@ function Selection({
             style={{
                 display: "flex",
                 flexDirection: "row",
-                width: "100%",
+                boxSizing: "border-box",
+                width: "90%",
             }}
         >
             {selections}

@@ -11,6 +11,7 @@ function PlayingCard({ card, style }: { card: string; style: React.CSSProperties
                 borderWidth: "1px",
                 borderStyle: "solid",
                 height: "100%",
+                width: "100%",
                 ...style,
             }}
         ></img>
