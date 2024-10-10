@@ -11,7 +11,27 @@ function Board({
     position: Vec2;
 }) {
     const columns = [];
-    const matrix = [...game.board];
+    const matrix = [...game.board].map((row) => [...row])
+
+    // fill in guess
+    for (let i = 0; i < guess.length; i++) {
+        if (matrix[i][0].state == State.Empty) {
+            guess.map((n) => {
+                return n == undefined ? undefined : {
+                    state: State.Visible,
+                    n: n,
+                    color: null,
+                };
+            }).forEach((card, j) => {
+                if (card == undefined) {
+                    return;
+                }
+                matrix[i][j] = card;
+            })
+            break;
+        }
+    }
+
     for (let i = 0; i < matrix.length; i++) {
         const cards = matrix[i];
         const column = [];
@@ -35,6 +55,7 @@ function Board({
                     if (card.color) {
                         style.backgroundColor = card.color;
                     }
+                    break;
                 default:
                     break;
             }

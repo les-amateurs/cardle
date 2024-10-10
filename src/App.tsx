@@ -90,18 +90,29 @@ function App() {
         validSelections.set(valid);
     }
 
+    function select() {
+        const lastGuess = guess.get;
+        const yPos = position.get.y;
+        
+        const newGuess = [...lastGuess];
+        newGuess[yPos] = currentSelection.get;
+
+        guess.set(newGuess);
+    }
+
     const events = new Map(
         Object.entries({
             ArrowDown: updatePosition,
             ArrowUp: updatePosition,
             ArrowLeft: updateSelection,
             ArrowRight: updateSelection,
+            Enter: select,
         })
     );
     const handleKeyPress = (event: KeyboardEvent) => {
-        event.preventDefault();
         const callback = events.get(event.key);
         if (callback) {
+            event.preventDefault(); // i want to reload the page :skull:
             callback(event.key);
         }
     };
