@@ -1,205 +1,150 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Game, Card, State, IDS, mod, Var, wrap, Vec2 } from "./common.tsx";
 import "./App.css";
+import Board from "./Board.tsx";
+import Selection from "./Selection.tsx";
 
-const IDS = [
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "ten",
-    "jack",
-    "queen",
-    "king",
-    "ace",
-];
-const SUITS = ["hearts", "clubs", "diamonds", "spades"];
-
-interface Card {
-    state: string;
-    n: number;
-}
-
-interface Game {
-    board: Card[][];
-    greens: number[];
-    yellows: Map<number, number[]>;
-    grays: number[];
-}
-
-function numberToCard(card: Card) {
-    const suit = 0;
-    if (card.state === "U") {
-        return "./src/assets/backs/back-0-0.png";
-    }
-    return `./src/assets/cards/${IDS[card.n]}-of-${SUITS[suit]}.png`;
-}
-
-function renderCard(card: Card, style: React.CSSProperties) {
-    return (
-        <img
-            src={numberToCard(card)}
-            style={{
-                objectFit: "contain",
-                imageRendering: "-moz-crisp-edges",
-                borderColor: "gray",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                height: "100%",
-                ...style,
-            }}
-        ></img>
-    );
-}
-
-function renderColumn(cards: Card[], currentRow: number) {
-    const r = [];
-    for (let i = 0; i < cards.length; i++) {
-        if (i == currentRow) {
-            r.push(renderCard(cards[i], { backgroundColor: "gray" }));
-        } else {
-            r.push(renderCard(cards[i], { backgroundColor: "inherit" }));
-        }
-    }
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                width: "100%",
-            }}
-        >
-            {r}
-        </div>
-    );
-}
-
-function renderBoard(game: Game, currentGuess: number, currentRow: number) {
-    const r = [];
-    for (let i = 0; i < game.board.length; i++) {
-        const col = game.board[i];
-        if (i == currentGuess) {
-            r.push(renderColumn(col, currentRow));
-        } else {
-            r.push(renderColumn(col, -1));
-        }
-    }
-    return r.reverse();
-}
-
-function renderOptions(game: Game, currentOption: number) {
-    const options = [];
-    const valid = [];
-    let index = 0;
-    for (let i = 0; i < IDS.length; i++) {
-        const style: React.CSSProperties = {};
-        const isInvalid = game.greens.indexOf(i) != -1 || game.grays.indexOf(i) != -1 || game.yellows.has(i);
-        if (isInvalid) {
-            style.filter = "brightness(30%)";
-        }
-        const card = renderCard(
-            {
-                state: "S",
-                n: i,
-            },
-            style,
-        );
-        options.push(card);
-        if (!isInvalid) {
-            valid.push(card);
-            index += 1;
-        }
-    }
-
-    valid[mod(currentOption, valid.length)].props.style.backgroundColor = "black";
-
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "row",
-                height: "20vh"
-            }}
-        >
-            {options}
-        </div>
-    );
-}
-
-function updateOptions(
-    board: object[][],
-    selectedIndex: number,
-    setOptions: any
+function updateSelections(
+    game: Game,
+    position: Vec2,
+    validSelections: Var<number[]>
 ) {
-    const options = [];
+    const valid = [];
+    for (let i = 0; i < IDS.length; i++) {
+        const isInvalid =
+            game.greens.indexOf(i) != -1 ||
+            game.grays.indexOf(i) != -1 ||
+            (game.yellows.has(i) &&
+                game.yellows.get(i)?.indexOf(position.y) != -1);
+        if (!isInvalid) {
+            valid.push(i);
+        }
+    }
+    validSelections.set(valid);
+}
+
+function updateGame(currentGuess: number, setGame: any) {
+    setGame((game: Game) => {
+        const newGreens = [...game.greens];
+        const newYellows = new Map(game.yellows);
+        const newGrays = [...game.grays];
+        const guess = game.board[currentGuess];
+        for (let i = 0; i < 4; i++) {
+            const n = guess[i].n;
+            if (n == game.answer[i]) {
+                newGreens.push(n);
+            } else if (game.answer.indexOf(n) != -1) {
+                newYellows.get(n)?.push(i);
+            } else {
+                newGrays.push(n);
+            }
+        }
+        return {
+            ...game,
+            greens: newGreens,
+            yellows: newYellows,
+            grays: newGrays,
+        };
+    });
 }
 
 function randomAnswer() {
     const answer = [];
-    for (let i = 0; i < 4; i++) {
-        answer.push({
-            state: "H",
-            n: Math.floor(Math.random() * 13),
-        });
+    while (answer.length < 4) {
+        const n = Math.floor(Math.random() * 13);
+        if (answer.indexOf(n) == -1) {
+            answer.push(n);
+        }
     }
     return answer;
 }
 
-function mod(n: number, m: number) {
-    return ((n % m) + m) % m;
-}
-
 function App() {
-    const [answer, setAnswer] = useState(randomAnswer());
-    const [game, setGame] = useState({
-        board: Array(10)
-            .fill(0)
-            .map((u) =>
-                Array(4).fill({
-                    state: "U",
-                    number: undefined,
-                })
+    const game: Var<Game> = wrap(
+        useState({
+            board: Array(10)
+                .fill(0)
+                .map((u) =>
+                    Array(4).fill({
+                        state: State.Empty,
+                        n: 0,
+                        color: undefined,
+                    })
+                ),
+            answer: randomAnswer(),
+            greens: [],
+            yellows: new Map(
+                Array(13)
+                    .fill(0)
+                    .map((_, i) => [i, []])
             ),
-        greens: [0],
-        yellows: new Map(),
-        grays: [],
-    });
-    const [currentGuess, setCurrentGuess] = useState(0);
-    const [currentRow, setCurrentRow] = useState(0);
-    const [currentOption, setCurrentOption] = useState(0);
-    const [lastPressedKey, setLastPressedKey] = useState(null);
-    const [currentOptions, setCurrentOptions] = useState({});
+            grays: [],
+        })
+    );
+    const guess: Var<number[]> = wrap(useState([]));
+    const position: Var<{ x: number; y: number }> = wrap(
+        useState({ x: 0, y: 0 })
+    );
+    const currentSelection: Var<number> = wrap(useState(0));
+    const validSelections: Var<number[]> = wrap(useState([]));
 
-    const handleKeyPress = (event: KeyboardEvent) => {
-        event.preventDefault();
-        let row = currentRow;
-        let option = currentOption;
-        switch (event.key) {
+    function updatePosition(key: string) {
+        let pos = {...position.get};
+        switch (key) {
             case "ArrowDown":
-                row = currentRow + 1;
+                pos.y += 1;
                 break;
             case "ArrowUp":
-                row = currentRow - 1;
-                break;
-            case "ArrowLeft":
-                option = option - 1;
-                break;
-            case "ArrowRight":
-                option = option + 1;
+                pos.y -= 1;
                 break;
         }
-        setCurrentRow(mod(row, 4));
-        setCurrentOption(option);
+        pos.y = mod(pos.y, 4);
+        console.log(pos);
+        position.set(pos);
+    }
+
+    function updateSelection(key: string | null) {
+        let sel = currentSelection.get;
+        if (key) {
+            switch (key) {
+                case "ArrowLeft":
+                    sel -= 1;
+                    break;
+                case "ArrowRight":
+                    sel += 1;
+                    break;
+            }
+        }
+        currentSelection.set(mod(sel, validSelections.get.length));
+    }
+
+    const events = new Map(
+        Object.entries({
+            ArrowDown: updatePosition,
+            ArrowUp: updatePosition,
+            ArrowLeft: updateSelection,
+            ArrowRight: updateSelection,
+        })
+    );
+    const handleKeyPress = (event: KeyboardEvent) => {
+        event.preventDefault();
+        const callback = events.get(event.key);
+        if (callback) {
+            callback(event.key);
+        }
     };
+
+    useEffect(() => {updateSelection(null)}, [validSelections.get]);
+
     useEffect(() => {
         window.addEventListener("keydown", handleKeyPress);
-
         return () => window.removeEventListener("keydown", handleKeyPress);
-    }, [currentRow, currentOption]);
+    }, [handleKeyPress]);
+
+    useEffect(() => {
+        updateSelections(game.get, position.get, validSelections);
+    }, [currentSelection.get]);
 
     return (
         <div
@@ -213,22 +158,11 @@ function App() {
                 alignItems: "center",
             }}
         >
-            <div
-                style={{
-                    borderColor: "gray",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    display: "flex",
-                    flexDirection: "row",
-                    height: "70vh",
-                    width: "100%",
-                }}
-            >
-                {renderColumn(answer, -1)}
-                {renderBoard(game, currentGuess, currentRow)}
-            </div>
-
-            {renderOptions(game, currentOption)}
+            <Board game={game.get} position={position.get}></Board>
+            <Selection
+                validSelections={validSelections.get}
+                currentSelectionIndex={currentSelection.get}
+            ></Selection>
         </div>
     );
 }
