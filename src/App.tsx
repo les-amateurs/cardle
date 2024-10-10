@@ -47,15 +47,13 @@ function App() {
                 ),
             answer: randomAnswer(),
             greens: new Map<number, number>(),
-            yellows: new Map(
-                Array(13)
-                    .fill(0)
-                    .map((_, i) => [i, []])
-            ),
+            yellows: new Map(),
             grays: [],
         })
     );
-    const guess: Var<(number | undefined)[]> = wrap(useState([]));
+    const guess: Var<(number | undefined)[]> = wrap(
+        useState(Array(4).fill(undefined))
+    );
     const position: Var<Vec2> = wrap(useState({ x: 0, y: 0 }));
     const currentSelection: Var<number> = wrap(useState(0));
     const validSelections: Var<number[]> = wrap(useState([]));
@@ -76,7 +74,7 @@ function App() {
                 } while (!validRows.get[pos.y]);
                 break;
         }
-        position.set({...position.get, y: pos.y });
+        position.set({ ...position.get, y: pos.y });
     }
 
     function updateSelection(key: string | null) {
@@ -104,16 +102,27 @@ function App() {
     }
 
     function updateSelections() {
-        const valid = [];
-        for (let i = 0; i < IDS.length; i++) {
-            const isInvalid =
-                game.get.greens.has(i) ||
-                game.get.grays.indexOf(i) != -1 ||
-                (game.get.yellows.has(i) &&
-                    game.get.yellows.get(i)?.indexOf(position.get.y) != -1) ||
-                guess.get.indexOf(i) != -1;
-            if (!isInvalid) {
-                valid.push(i);
+        let valid = [];
+        const empty = guess.get.filter((g) => g === undefined).length;
+        const yellows = Array.from(game.get.yellows.keys()).filter(
+            (g) =>
+                guess.get.indexOf(g) == -1 &&
+                game.get.yellows.get(g)?.indexOf(position.get.y) == -1
+        );
+        if (yellows.length > 0 && yellows.length >= empty) {
+            valid = yellows;
+        } else {
+            for (let i = 0; i < IDS.length; i++) {
+                const isInvalid =
+                    game.get.greens.has(i) ||
+                    game.get.grays.indexOf(i) != -1 ||
+                    (game.get.yellows.has(i) &&
+                        game.get.yellows.get(i)?.indexOf(position.get.y) !=
+                            -1) ||
+                    guess.get.indexOf(i) != -1;
+                if (!isInvalid) {
+                    valid.push(i);
+                }
             }
         }
         validSelections.set(valid);
@@ -121,7 +130,7 @@ function App() {
 
     function updateValidRows() {
         const values = Array.from(game.get.greens.values());
-        const rows = [0, 1, 2, 3].map(n => values.indexOf(n) == -1);
+        const rows = [0, 1, 2, 3].map((n) => values.indexOf(n) == -1);
         validRows.set(rows);
     }
 
@@ -174,6 +183,7 @@ function App() {
                     card.n = g;
                     card.state = State.Visible;
                     if (g == game.get.answer[i]) {
+                        newYellows.delete(g);
                         newGreens.set(g, i);
                         newGuess[i] = g;
                         card.color = "green";
@@ -191,15 +201,19 @@ function App() {
                 newBoard[xPos][i] = card;
             }
 
-            game.set({
-                ...game.get,
-                board: newBoard,
-                greens: newGreens,
-                yellows: newYellows,
-                grays: newGrays,
-            });
-            position.set({ ...position.get, x: position.get.x + 1 });
-            guess.set(newGuess);
+            if (guess.get == game.get.answer) {
+                guess.set([]);
+            } else {
+                game.set({
+                    ...game.get,
+                    board: newBoard,
+                    greens: newGreens,
+                    yellows: newYellows,
+                    grays: newGrays,
+                });
+                position.set({ ...position.get, x: position.get.x + 1 });
+                guess.set(newGuess);
+            }
         }
     }
 

@@ -32,8 +32,8 @@ function Selection({
                 display: "flex",
                 flexDirection: "row",
                 boxSizing: "border-box",
-                width: "90vw",
-                maxWidth: "90vw",
+                width: "100%",
+                height: "20vh",
                 justifyContent: "center",
             }}
         >
