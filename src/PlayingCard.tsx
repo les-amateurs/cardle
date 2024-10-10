@@ -6,7 +6,7 @@ function PlayingCard({ card, style }: { card: string; style: React.CSSProperties
             src={card}
             style={{
                 objectFit: "contain",
-                imageRendering: "crisp-edges",
+                imageRendering: "pixelated",
                 borderColor: "gray",
                 borderWidth: "1px",
                 borderStyle: "solid",
