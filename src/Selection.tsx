@@ -30,7 +30,7 @@ function Selection({
             style={{
                 display: "flex",
                 flexDirection: "row",
-                height: "20vh",
+                width: "100%",
             }}
         >
             {selections}
