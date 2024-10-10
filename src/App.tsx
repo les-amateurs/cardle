@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Game, Card, State, IDS, mod, Var, wrap, Vec2 } from "./common.tsx";
+import { Game, State, IDS, mod, Var, wrap, Vec2 } from "./common.tsx";
 import "./App.css";
 import Board from "./Board.tsx";
 import Selection from "./Selection.tsx";
@@ -134,7 +134,7 @@ function App() {
     const handleKeyPress = (event: KeyboardEvent) => {
         const callback = events.get(event.key);
         if (callback) {
-            event.preventDefault(); // i want to reload the page :skull:
+            event.preventDefault(); // i want to reload the page :skull: (L)
             callback(event.key);
         }
     };
@@ -160,7 +160,6 @@ function App() {
                 height: "100vh",
                 width: "100%",
                 margin: "auto",
-                justifyContent: "center",
                 alignItems: "center",
             }}
         >

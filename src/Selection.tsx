@@ -18,10 +18,11 @@ function Selection({
             style.backgroundColor = "black";
         }
         selections.push(
-            <PlayingCard
-                card={numberToCard(i)}
-                style={style}
-            ></PlayingCard>
+            <div style={{
+                height: "100%",
+            }}>
+                <PlayingCard card={numberToCard(i)} style={style}></PlayingCard>
+            </div>
         );
     }
 
@@ -31,7 +32,9 @@ function Selection({
                 display: "flex",
                 flexDirection: "row",
                 boxSizing: "border-box",
-                width: "90%",
+                width: "90vw",
+                maxWidth: "90vw",
+                justifyContent: "center",
             }}
         >
             {selections}

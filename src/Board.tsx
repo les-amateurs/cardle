@@ -6,42 +6,44 @@ function Board({
     game,
     position,
 }: {
-    guess: number[],
+    guess: number[];
     game: Game;
     position: Vec2;
 }) {
-    const columns = [];
-    const matrix = [...game.board].map((row) => [...row])
+    let cards = [];
+    const matrix = [...game.board].map((col) => [...col]);
 
     // fill in guess
     for (let i = 0; i < guess.length; i++) {
         if (matrix[i][0].state == State.Empty) {
-            guess.map((n) => {
-                return n == undefined ? undefined : {
-                    state: State.Visible,
-                    n: n,
-                    color: null,
-                };
-            }).forEach((card, j) => {
-                if (card == undefined) {
-                    return;
-                }
-                matrix[i][j] = card;
-            })
+            guess
+                .map((n) => {
+                    return n == undefined
+                        ? undefined
+                        : {
+                              state: State.Visible,
+                              n: n,
+                              color: null,
+                          };
+                })
+                .forEach((card, j) => {
+                    if (card == undefined) {
+                        return;
+                    }
+                    matrix[i][j] = card;
+                });
             break;
         }
     }
 
-    for (let i = 0; i < matrix.length; i++) {
-        const cards = matrix[i];
-        const column = [];
-        for (let j = 0; j < cards.length; j++) {
-            const card = cards[j];
+    for (let i = 0; i < matrix[0].length; i++) {
+        for (let j = 0; j < matrix.length; j++) {
+            const card = matrix[j][i];
             const n = card.n;
             let style: React.CSSProperties = {};
             let image = numberToCard(n);
 
-            if (i == position.x && j == position.y) {
+            if (i == position.y && j == position.x) {
                 style.backgroundColor = "gray";
             } else {
                 style.backgroundColor = "inherit";
@@ -60,21 +62,10 @@ function Board({
                     break;
             }
 
-            column.push(
+            cards.push(
                 <PlayingCard card={image} style={style}></PlayingCard>
             );
         }
-        columns.push(
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    width: "100%",
-                }}
-            >
-                {column}
-            </div>
-        );
     }
 
     return (
@@ -83,13 +74,12 @@ function Board({
                 borderColor: "gray",
                 borderWidth: "1px",
                 borderStyle: "solid",
-                display: "flex",
-                flexDirection: "row",
+                display: "grid",
                 height: "70vh",
-                width: "100%",
+                gridTemplateColumns: "repeat(10, 1fr)",
             }}
         >
-            {columns.reverse()}
+            {cards}
         </div>
     );
 }
