@@ -4,6 +4,8 @@ import "./App.css";
 import Board from "./Board.tsx";
 import Selection from "./Selection.tsx";
 
+const SHORTCODES = new Map(Object.entries({ "2": 0, "3": 1, "4": 2, "5": 3, "6": 4, "7": 5, "8": 6, "9": 7, "10": 8, "j": 9, "q": 10, "k": 11, "a": 12 }));
+
 function randomAnswer() {
     const answer = [];
     while (answer.length < 4) {
@@ -55,13 +57,11 @@ function App() {
                 break;
         }
         pos.y = mod(pos.y, 4);
-        console.log(pos);
         position.set(pos);
     }
 
     function updateSelection(key: string | null) {
         let sel = currentSelection.get;
-        console.log(sel, validSelections.get.length);
         if (key) {
             switch (key) {
                 case "ArrowLeft":
@@ -69,6 +69,15 @@ function App() {
                     break;
                 case "ArrowRight":
                     sel += 1;
+                    break;
+                default:
+                    const card = SHORTCODES.get(key);
+                    if (card !== undefined) {
+                        const idx = validSelections.get.indexOf(card);
+                        if (idx != -1) {
+                            sel = idx;
+                        }
+                    }
                     break;
             }
         }
@@ -96,6 +105,19 @@ function App() {
             ArrowUp: updatePosition,
             ArrowLeft: updateSelection,
             ArrowRight: updateSelection,
+            2: updateSelection,
+            3: updateSelection,
+            4: updateSelection,
+            5: updateSelection,
+            6: updateSelection,
+            7: updateSelection,
+            8: updateSelection,
+            9: updateSelection,
+            10: updateSelection,
+            j: updateSelection,
+            q: updateSelection,
+            k: updateSelection,
+            a: updateSelection,
         })
     );
     const handleKeyPress = (event: KeyboardEvent) => {
