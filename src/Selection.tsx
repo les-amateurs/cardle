@@ -14,7 +14,6 @@ function Selection({
         if (validSelections.indexOf(i) == -1) {
             style.filter = "brightness(30%)";
         }
-        console.log(validSelections, currentSelectionIndex);
         if (i == validSelections[currentSelectionIndex]) {
             style.backgroundColor = "black";
         }
