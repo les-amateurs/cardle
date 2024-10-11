@@ -67,7 +67,7 @@ function App() {
                         color: undefined,
                     })
                 ),
-            answer: randomAnswer(),
+            answer: [12, 0, 9, 6], // randomAnswer(),
             greens: new Map<number, number>(),
             yellows: new Map(),
             grays: [],
@@ -85,6 +85,7 @@ function App() {
 
     function updatePosition(key: string) {
         let pos = { ...position.get };
+        console.log(game.get);
         switch (key) {
             case "ArrowDown":
                 for (let i = 0; i < 4; i++) {
@@ -198,7 +199,7 @@ function App() {
             let valid = true;
             for (let i = 0; i < 4; i++) {
                 const g = oldGuess[i];
-                if (g) {
+                if (g !== undefined) {
                     const y = game.get.yellows.get(g);
                     if (y !== undefined && y.indexOf(i) != -1) {
                         valid = false;
