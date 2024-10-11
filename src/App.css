@@ -66,3 +66,25 @@ body {
     transform: scale(100%);
   }
 }
+
+@font-face {
+  font-family: "balatro";
+  src: url("/src/assets/fonts/m6x11plus.ttf");
+}
+
+@keyframes title-pop {
+  0% {
+    transform: scale(120%);
+  }
+  100% {
+    transform: scale(120%);
+  }
+}
+
+.title:hover {
+  animation: title-pop 100ms;
+}
+
+.button:hover {
+  transform: scale(120%);
+}

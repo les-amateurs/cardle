@@ -67,7 +67,7 @@ function Board({
         for (let y = 0; y < matrix[0].length; y++) {
             const card = matrix[x][y];
             const n = card.n;
-            const isTarget = y == position.y && x == position.x;
+            const isTarget = y == position.y && x == position.x && !game.win;
             let style: React.CSSProperties = {};
             let image = "./src/assets/empty.png";
 
@@ -96,9 +96,9 @@ function Board({
                     style={style}
                     mouse={mouse.get}
                     position={position}
-                    x={x}
-                    y={y}
+                    isTarget={isTarget}
                     ref={refs[x][y]}
+                    jitter={12}
                 ></PlayingCard>
             );
         }
@@ -112,7 +112,7 @@ function Board({
                 style={{
                     display: "grid",
                     gridTemplateColumns: "1fr",
-                    gap: "5px",
+                    // gap: "2px",
                     ...style,
                 }}
             >

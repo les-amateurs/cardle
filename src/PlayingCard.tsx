@@ -5,13 +5,11 @@ interface Props {
     card: string;
     style: React.CSSProperties;
     mouseOver?: any;
-    click?: any,
+    click?: any;
     mouse?: MouseEvent;
-    hover?: boolean;
-    react?: boolean;
-    x?: number,
-    y?: number,
-    position?: Vec2,
+    isTarget?: boolean,
+    position?: Vec2;
+    jitter?: number,
 }
 
 function rotate({ x, y }: Vec2, theta: number) {
@@ -23,12 +21,9 @@ function rotate({ x, y }: Vec2, theta: number) {
 const PlayingCard = forwardRef<HTMLImageElement, Props>(
     ({ card, style, ...props }: Props, ref) => {
         // function PlayingCard({ card, style, ...props }: Props) {
-        let isTarget = false;
-        if (props.x !== undefined && props.y !== undefined && props.position !== undefined) {
-            isTarget = (props.x == props.position.x && props.y == props.position.y);
-        }
         const mouseOver = props.mouseOver || (() => {});
         const click = props.click || (() => {});
+        const isTarget = props.isTarget || false;
         const hover = !isTarget;
         const react = isTarget;
         const rotateX: Var<number> = wrap(useState(0));
@@ -37,23 +32,25 @@ const PlayingCard = forwardRef<HTMLImageElement, Props>(
             useState(rotate({ x: 1, y: 0 }, Math.floor(Math.random() * 360)))
         );
         const theta = 2;
+        const jitter = props.jitter || 10;
         const transform = style.transform || "";
 
         useEffect(() => {
-            if (hover) {
-                const intervalId = setInterval(() => {
+            console.log(position.get);
+            const intervalId = setInterval(() => {
+                if (hover) {
                     position.set((v: Vec2) => {
                         return rotate(v, theta);
                     });
-                }, 20);
-                return () => clearInterval(intervalId);
-            }
-        }, []);
+                }
+            }, 20);
+            return () => clearInterval(intervalId);
+        }, [props.position]);
 
         useEffect(() => {
             if (hover) {
-                rotateX.set(10 * position.get.x);
-                rotateY.set(10 * position.get.y);
+                rotateX.set(jitter * position.get.x);
+                rotateY.set(jitter * position.get.y);
             }
         }, [position.get]);
 
@@ -61,11 +58,11 @@ const PlayingCard = forwardRef<HTMLImageElement, Props>(
             if (props.mouse && ref && react) {
                 // const box = ref.current.getBoundingClientRect();
                 rotateX.set(
-                    (90 * (props.mouse.clientX - window.innerWidth / 2)) /
+                    (60 * (props.mouse.clientX - window.innerWidth / 2)) /
                         window.innerWidth
                 );
                 rotateY.set(
-                    (90 * (props.mouse.clientY - window.innerHeight / 2)) /
+                    (60 * (props.mouse.clientY - window.innerHeight / 2)) /
                         window.innerHeight
                 );
                 // console.log(rotateX.get, rotateY.get);

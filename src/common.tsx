@@ -47,6 +47,17 @@ export const IDS = [
 
 export const SUITS = ["hearts", "clubs", "diamonds", "spades"];
 
+export const SOUND_EFFECTS = Object.fromEntries(
+    Object.entries({
+        cardSelect: "cardSlide2",
+        win: "win",
+        cardFan: "cardFan2"
+    }).map(([name, file]) => [
+        name,
+        () => new Audio(`./src/assets/sounds/effects/${file}.ogg`).play(),
+    ])
+);
+
 export function mod(n: number, m: number) {
     const d = m == 0 ? 1 : m;
     return ((n % d) + m) % d;
