@@ -67,7 +67,7 @@ function App() {
                         color: undefined,
                     })
                 ),
-            answer: [12, 0, 9, 6], // randomAnswer(),
+            answer: [0, 11, 10, 12], // randomAnswer(),
             greens: new Map<number, number>(),
             yellows: new Map(),
             grays: [],
@@ -212,7 +212,7 @@ function App() {
                 }
             }
 
-            if (valid || validSelections.get.length == 0) {
+            if (valid) {
                 const newBoard = structuredClone(game.get.board);
                 const newGreens = new Map(game.get.greens);
                 const newGrays = structuredClone(game.get.grays);
