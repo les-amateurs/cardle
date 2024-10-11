@@ -33,4 +33,36 @@
 
 body {
   margin: 0;
+  overflow: hidden;
+}
+
+@keyframes card-pop {
+  0% {
+    rotate: 0deg;
+  }
+
+  33% {
+    rotate: 10deg;
+  }
+  66% {
+    rotate: -10deg;
+  }
+
+  100% {
+    rotate: 0deg;
+  }
+}
+
+@keyframes column-pop {
+  0% {
+    transform: scale(90%);
+  }
+
+  50% {
+    transform: scale(110%);
+  }
+
+  100% {
+    transform: scale(100%);
+  }
 }

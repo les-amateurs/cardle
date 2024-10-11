@@ -56,6 +56,6 @@ export function wrap<T>([val, setter]: [T, any]): Var<T> {
 }
 
 export function numberToCard(card: number) {
-    const suit = 0;
+    const suit = 1;
     return `./src/assets/cards/${IDS[card]}-of-${SUITS[suit]}.png`;
 }

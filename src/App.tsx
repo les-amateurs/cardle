@@ -4,22 +4,40 @@ import "./App.css";
 import Board from "./Board.tsx";
 import Selection from "./Selection.tsx";
 
+const MUSIC_TRACKS = [
+    "music1.ogg",
+    "music2.ogg",
+    "music3.ogg",
+    "music4.ogg",
+    "music5.ogg",
+].map((file) => `./src/assets/sounds/${file}`);
+
 const SHORTCODES = new Map(
     Object.entries({
-        "2": 0,
-        "3": 1,
-        "4": 2,
-        "5": 3,
-        "6": 4,
-        "7": 5,
-        "8": 6,
-        "9": 7,
-        "10": 8,
-        j: 9,
-        q: 10,
-        k: 11,
-        a: 12,
+        Digit2: 0,
+        Digit3: 1,
+        Digit4: 2,
+        Digit5: 3,
+        Digit6: 4,
+        Digit7: 5,
+        Digit8: 6,
+        Digit9: 7,
+        Digit1: 8,
+        KeyJ: 9,
+        KeyQ: 10,
+        KeyK: 11,
+        KeyA: 12,
     })
+);
+
+const SOUND_EFFECTS = Object.fromEntries(
+    Object.entries({
+        cardSelect: "cardSlide2",
+        win: "win",
+    }).map(([name, file]) => [
+        name,
+        () => new Audio(`./src/assets/sounds/effects/${file}.ogg`).play(),
+    ])
 );
 
 function randomAnswer() {
@@ -31,6 +49,10 @@ function randomAnswer() {
         }
     }
     return answer;
+}
+
+function randomSong() {
+    return MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
 }
 
 function App() {
@@ -58,6 +80,7 @@ function App() {
     const currentSelection: Var<number> = wrap(useState(0));
     const validSelections: Var<number[]> = wrap(useState([]));
     const validRows: Var<number[]> = wrap(useState([0, 1, 2, 3]));
+    const currentSong: Var<string> = wrap(useState(randomSong()));
 
     function updatePosition(key: string) {
         let pos = { ...position.get };
@@ -77,6 +100,13 @@ function App() {
         position.set({ ...position.get, y: pos.y });
     }
 
+    function setCurrentSelection(sel: number) {
+        if (sel != currentSelection.get) {
+            SOUND_EFFECTS.cardSelect();
+        }
+        currentSelection.set(mod(sel, validSelections.get.length));
+    }
+
     function updateSelection(key: string | null) {
         let sel = currentSelection.get;
         if (key) {
@@ -89,6 +119,7 @@ function App() {
                     break;
                 default:
                     const card = SHORTCODES.get(key);
+                    console.log(card);
                     if (card !== undefined) {
                         const idx = validSelections.get.indexOf(card);
                         if (idx != -1) {
@@ -98,33 +129,22 @@ function App() {
                     break;
             }
         }
-        currentSelection.set(mod(sel, validSelections.get.length));
+        setCurrentSelection(sel);
     }
 
     function updateSelections() {
         let valid = [];
-        const empty = guess.get.filter((g) => g === undefined).length;
-        const yellows = Array.from(game.get.yellows.keys()).filter(
-            (g) =>
-                guess.get.indexOf(g) == -1 &&
-                game.get.yellows.get(g)?.indexOf(position.get.y) == -1
-        );
-        if (yellows.length > 0 && yellows.length >= empty) {
-            valid = yellows;
-        } else {
-            for (let i = 0; i < IDS.length; i++) {
-                const isInvalid =
-                    game.get.greens.has(i) ||
-                    game.get.grays.indexOf(i) != -1 ||
-                    (game.get.yellows.has(i) &&
-                        game.get.yellows.get(i)?.indexOf(position.get.y) !=
-                            -1) ||
-                    guess.get.indexOf(i) != -1;
-                if (!isInvalid) {
-                    valid.push(i);
-                }
+
+        for (let i = 0; i < IDS.length; i++) {
+            const isInvalid =
+                game.get.greens.has(i) ||
+                game.get.grays.indexOf(i) != -1 ||
+                guess.get.indexOf(i) != -1;
+            if (!isInvalid) {
+                valid.push(i);
             }
         }
+
         validSelections.set(valid);
     }
 
@@ -134,6 +154,24 @@ function App() {
         validRows.set(rows);
     }
 
+    function newRowPosition(newGuess: (number | undefined)[]) {
+        const pos = { ...position.get };
+        const closest = [];
+        for (let i = 0; i < 4; i++) {
+            if (newGuess[i] === undefined) {
+                closest.push(i);
+            }
+        }
+        closest.sort(
+            (a, b) =>
+                Math.abs(a - position.get.y) - Math.abs(b - position.get.y)
+        );
+        if (closest.length != 0) {
+            pos.y = closest[0];
+        }
+        return pos;
+    }
+
     function select() {
         const lastGuess = guess.get;
         const yPos = position.get.y;
@@ -141,16 +179,7 @@ function App() {
         const newGuess = [...lastGuess];
         newGuess[yPos] = validSelections.get[currentSelection.get];
 
-        const closest = [];
-        for (let i = 0; i < 4; i++) {
-            if (newGuess[i] === undefined) {
-                closest.push(i);
-            }
-        }
-        closest.sort((a, b) => Math.abs(a - yPos) - Math.abs(b - yPos));
-        if (closest.length != 0) {
-            position.set({ ...position.get, y: closest[0] });
-        }
+        position.set(newRowPosition(newGuess));
         guess.set(newGuess);
     }
 
@@ -163,56 +192,74 @@ function App() {
 
     function submit() {
         const oldGuess = structuredClone(guess.get);
-        if (
-            oldGuess.indexOf(undefined) == -1 ||
-            validSelections.get.length == 0
-        ) {
-            const newBoard = structuredClone(game.get.board);
-            const newGreens = structuredClone(game.get.greens);
-            const newGrays = structuredClone(game.get.grays);
-            const newYellows = new Map(game.get.yellows);
-            const newGuess = Array(4).fill(undefined);
-
-            const xPos = position.get.x;
+        if (oldGuess.indexOf(undefined) == -1) {
+            let valid = true;
             for (let i = 0; i < 4; i++) {
-                const card = { ...newBoard[xPos][i] };
                 const g = oldGuess[i];
-                if (g === undefined) {
-                    card.state = State.Empty;
-                } else {
-                    card.n = g;
-                    card.state = State.Visible;
-                    if (g == game.get.answer[i]) {
-                        newYellows.delete(g);
-                        newGreens.set(g, i);
-                        newGuess[i] = g;
-                        card.color = "green";
-                    } else if (game.get.answer.indexOf(g) != -1) {
-                        if (!newYellows.has(g)) {
-                            newYellows.set(g, []);
-                        }
-                        newYellows.get(g)?.push(i);
-                        card.color = "yellow";
-                    } else {
-                        newGrays.push(g);
-                        card.color = "gray";
+                if (g) {
+                    const y = game.get.yellows.get(g);
+                    if (y && y.indexOf(i) != -1) {
+                        valid = false;
                     }
                 }
-                newBoard[xPos][i] = card;
+            }
+            for (const y of Array.from(game.get.yellows.keys())) {
+                if (oldGuess.indexOf(y) == -1) {
+                    valid = false;
+                }
             }
 
-            if (guess.get == game.get.answer) {
-                guess.set([]);
-            } else {
-                game.set({
-                    ...game.get,
-                    board: newBoard,
-                    greens: newGreens,
-                    yellows: newYellows,
-                    grays: newGrays,
-                });
-                position.set({ ...position.get, x: position.get.x + 1 });
-                guess.set(newGuess);
+            if (valid || validSelections.get.length == 0) {
+                const newBoard = structuredClone(game.get.board);
+                const newGreens = new Map(game.get.greens);
+                const newGrays = structuredClone(game.get.grays);
+                const newYellows = new Map(game.get.yellows);
+                const newGuess = Array(4).fill(undefined);
+
+                const xPos = position.get.x;
+                for (let i = 0; i < 4; i++) {
+                    const card = { ...newBoard[xPos][i] };
+                    const g = oldGuess[i];
+                    if (g === undefined) {
+                        card.state = State.Empty;
+                    } else {
+                        card.n = g;
+                        card.state = State.Visible;
+                        if (g == game.get.answer[i]) {
+                            newYellows.delete(g);
+                            newGreens.set(g, i);
+                            newGuess[i] = g;
+                            card.color = "green";
+                        } else if (game.get.answer.indexOf(g) != -1) {
+                            if (!newYellows.has(g)) {
+                                newYellows.set(g, []);
+                            }
+                            newYellows.get(g)?.push(i);
+                            card.color = "yellow";
+                        } else {
+                            newGrays.push(g);
+                            // card.color = "gray";
+                        }
+                    }
+                    newBoard[xPos][i] = card;
+                }
+
+                if (Array.from(newGreens.keys()).toSorted() == game.get.answer.toSorted()) {
+                    SOUND_EFFECTS.win();
+                    guess.set([]);
+                } else {
+                    game.set({
+                        ...game.get,
+                        board: newBoard,
+                        greens: newGreens,
+                        yellows: newYellows,
+                        grays: newGrays,
+                    });
+                    const pos = newRowPosition(newGuess);
+                    pos.x += 1;
+                    position.set(pos);
+                    guess.set(newGuess);
+                }
             }
         }
     }
@@ -242,9 +289,9 @@ function App() {
         })
     );
     const handleKeyPress = (event: KeyboardEvent) => {
-        console.log(game.get);
+        // console.log(game.get);
         const callback = events.get(event.code);
-        console.log(event);
+        // console.log(event);
         if (callback) {
             event.preventDefault(); // i want to reload the page :skull: (L)
             callback(event.code);
@@ -268,6 +315,18 @@ function App() {
         updateValidRows();
     }, [game.get]);
 
+    useEffect(() => {
+        const music = new Audio(currentSong.get);
+        music.addEventListener("ended", (ev: Event) => {
+            currentSong.set(randomSong());
+        });
+        music.play();
+        return () => {
+            music.pause();
+            music.currentTime = 0;
+        };
+    }, [currentSong.get]);
+
     return (
         <div
             style={{
@@ -276,6 +335,7 @@ function App() {
                 height: "100vh",
                 width: "100%",
                 margin: "auto",
+                paddingTop: "2vh",
                 alignItems: "center",
             }}
         >
@@ -287,6 +347,8 @@ function App() {
             <Selection
                 validSelections={validSelections.get}
                 currentSelectionIndex={currentSelection.get}
+                currentSelectionIndexSet={setCurrentSelection}
+                select={select}
             ></Selection>
         </div>
     );
