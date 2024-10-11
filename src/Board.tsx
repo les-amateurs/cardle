@@ -1,5 +1,5 @@
 import PlayingCard from "./PlayingCard.tsx";
-import { Card, Game, IDS, SUITS, State, Vec2, Var, wrap } from "./common.tsx";
+import { Game, IDS, SUITS, State, Vec2, Var, wrap } from "./common.tsx";
 import { useRef, useState, useEffect } from "react";
 
 function numberToCard(card: number, color: string, border: boolean) {
@@ -25,9 +25,15 @@ function Board({
     const matrix = structuredClone(game.board);
     const xPos = position.x;
     const columns = [];
-    const refs = Array(10).fill(0).map(_ => Array(4).fill(0).map(_ => useRef<HTMLImageElement>(null)));
+    const refs = Array(10)
+        .fill(0)
+        .map((_) =>
+            Array(4)
+                .fill(0)
+                .map((_) => useRef<HTMLImageElement>(null))
+        );
 
-    var mouse: Var<MouseEvent|undefined> = wrap(useState(undefined));
+    var mouse: Var<MouseEvent | undefined> = wrap(useState(undefined));
 
     useEffect(() => {
         addEventListener("mousemove", mouseMove);
@@ -38,20 +44,22 @@ function Board({
     }
 
     // fill in guess
-    for (let i = 0; i < guess.length; i++) {
-        const card =
-            guess[i] === undefined
-                ? {
-                      state: State.Hidden,
-                      n: 0,
-                      color: null,
-                  }
-                : {
-                      state: State.Visible,
-                      n: guess[i] || 0,
-                      color: null,
-                  };
-        matrix[xPos][i] = card;
+    if (!game.win) {
+        for (let i = 0; i < guess.length; i++) {
+            const card =
+                guess[i] === undefined
+                    ? {
+                          state: State.Hidden,
+                          n: 0,
+                          color: null,
+                      }
+                    : {
+                          state: State.Visible,
+                          n: guess[i] || 0,
+                          color: null,
+                      };
+            matrix[xPos][i] = card;
+        }
     }
 
     for (let x = 0; x < xPos + 1; x++) {
@@ -73,7 +81,7 @@ function Board({
 
             switch (card.state) {
                 case State.Visible:
-                    image = numberToCard(n, card.color||"white", isTarget);
+                    image = numberToCard(n, card.color || "white", isTarget);
                     break;
                 case State.Hidden:
                     image = numberToBack("back-2-3", isTarget);
@@ -82,21 +90,35 @@ function Board({
                     break;
             }
 
-            cards.push(<PlayingCard card={image} style={style} mouse={mouse.get} position={position} x={x} y={y} ref={refs[x][y]}></PlayingCard>);
+            cards.push(
+                <PlayingCard
+                    card={image}
+                    style={style}
+                    mouse={mouse.get}
+                    position={position}
+                    x={x}
+                    y={y}
+                    ref={refs[x][y]}
+                ></PlayingCard>
+            );
         }
 
         const style: React.CSSProperties = {};
         if (x == xPos) {
             style.animation = "column-pop 1000ms";
         }
-        columns.push(<div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: "5px",
-            ...style,
-        }}>
-            {cards}
-        </div>);
+        columns.push(
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr",
+                    gap: "5px",
+                    ...style,
+                }}
+            >
+                {cards}
+            </div>
+        );
     }
 
     return (

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState } from "react";
-import { Vec2, Var, wrap, mod } from "./common.tsx";
+import { Vec2, Var, wrap } from "./common.tsx";
 
 interface Props {
     card: string;
@@ -58,8 +58,8 @@ const PlayingCard = forwardRef<HTMLImageElement, Props>(
         }, [position.get]);
 
         useEffect(() => {
-            if (props.mouse && react) {
-                const box = ref.current.getBoundingClientRect();
+            if (props.mouse && ref && react) {
+                // const box = ref.current.getBoundingClientRect();
                 rotateX.set(
                     (90 * (props.mouse.clientX - window.innerWidth / 2)) /
                         window.innerWidth

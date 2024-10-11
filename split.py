@@ -65,14 +65,17 @@ for i in range(4):
                     pixdata[x, y] = emptydata[x, y]
         white.save(f"src/assets/cards/white/{IDS[j]}-of-{SUITS[i]}.png")
 
+        border = draw_border(white)
+        border.save(f"src/assets/cards/white/border/{IDS[j]}-of-{SUITS[i]}.png")
+
         border = draw_border(new, model=white)
         border.save(f"src/assets/cards/none/border/{IDS[j]}-of-{SUITS[i]}.png")
 
         green = colorize(white, (0xa2, 0xff, 0xb1, 0xff))
         green.save(f"src/assets/cards/green/{IDS[j]}-of-{SUITS[i]}.png")
 
-        border = draw_border(white)
-        border.save(f"src/assets/cards/white/border/{IDS[j]}-of-{SUITS[i]}.png")
+        border = draw_border(green)
+        border.save(f"src/assets/cards/green/border/{IDS[j]}-of-{SUITS[i]}.png")
 
         yellow = colorize(white, (0xff, 0xf2, 0x9d, 0xff))
         yellow.save(f"src/assets/cards/yellow/{IDS[j]}-of-{SUITS[i]}.png")

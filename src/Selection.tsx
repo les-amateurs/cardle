@@ -1,4 +1,4 @@
-import { mod, IDS, State, SUITS } from "./common.tsx";
+import { IDS, SUITS } from "./common.tsx";
 import PlayingCard from "./PlayingCard.tsx";
 
 const HIGHEST = 200;

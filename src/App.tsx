@@ -60,7 +60,7 @@ function App() {
         useState({
             board: Array(10)
                 .fill(0)
-                .map((u) =>
+                .map((_) =>
                     Array(4).fill({
                         state: State.Empty,
                         n: 0,
@@ -71,6 +71,7 @@ function App() {
             greens: new Map<number, number>(),
             yellows: new Map(),
             grays: [],
+            win: false,
         })
     );
     const guess: Var<(number | undefined)[]> = wrap(
@@ -86,15 +87,16 @@ function App() {
         let pos = { ...position.get };
         switch (key) {
             case "ArrowDown":
-                do {
+                for (let i = 0; i < 4; i++) {
                     pos.y = mod(pos.y + 1, 4);
-                } while (!validRows.get[pos.y]);
+                    if (validRows.get[pos.y]) break;
+                }
                 break;
             case "ArrowUp":
-                console.log(validRows.get);
-                do {
+                for (let i = 0; i < 4; i++) {
                     pos.y = mod(pos.y - 1, 4);
-                } while (!validRows.get[pos.y]);
+                    if (validRows.get[pos.y]) break;
+                }
                 break;
         }
         position.set({ ...position.get, y: pos.y });
@@ -244,22 +246,25 @@ function App() {
                     newBoard[xPos][i] = card;
                 }
 
-                if (Array.from(newGreens.keys()).toSorted() == game.get.answer.toSorted()) {
+                const final = JSON.stringify(Array.from(newGreens.keys()).toSorted());
+                const answer = JSON.stringify(game.get.answer.toSorted());
+                const win = final === answer;
+                if (win) {
                     SOUND_EFFECTS.win();
-                    guess.set([]);
                 } else {
-                    game.set({
-                        ...game.get,
-                        board: newBoard,
-                        greens: newGreens,
-                        yellows: newYellows,
-                        grays: newGrays,
-                    });
                     const pos = newRowPosition(newGuess);
                     pos.x += 1;
                     position.set(pos);
-                    guess.set(newGuess);
                 }
+                game.set({
+                    ...game.get,
+                    board: newBoard,
+                    greens: newGreens,
+                    yellows: newYellows,
+                    grays: newGrays,
+                    win,
+                });
+                guess.set(newGuess);
             }
         }
     }
@@ -317,7 +322,7 @@ function App() {
 
     useEffect(() => {
         const music = new Audio(currentSong.get);
-        music.addEventListener("ended", (ev: Event) => {
+        music.addEventListener("ended", (_: Event) => {
             currentSong.set(randomSong());
         });
         music.play();

@@ -16,6 +16,7 @@ export interface Game {
     greens: Map<number, number>;
     yellows: Map<number, number[]>;
     grays: number[];
+    win: boolean,
 }
 
 export interface Vec2 {
