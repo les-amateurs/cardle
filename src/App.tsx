@@ -200,7 +200,7 @@ function App() {
                 const g = oldGuess[i];
                 if (g) {
                     const y = game.get.yellows.get(g);
-                    if (y && y.indexOf(i) != -1) {
+                    if (y !== undefined && y.indexOf(i) != -1) {
                         valid = false;
                     }
                 }

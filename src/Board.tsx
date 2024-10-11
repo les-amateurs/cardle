@@ -75,7 +75,7 @@ function Board({
             style.zIndex = 0;
             style.transform = "";
             if (isTarget) {
-                style.transform += "scale(110%) ";
+                style.transform += "scale(120%) ";
                 style.zIndex = 100;
             }
 
